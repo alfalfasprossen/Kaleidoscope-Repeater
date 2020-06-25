@@ -1,4 +1,5 @@
 #include "Kaleidoscope-Repeater.h"
+#include "kaleidoscope/layers.h"
 
 namespace kaleidoscope {
 namespace plugin {
@@ -9,10 +10,16 @@ uint8_t Repeater::tap_timeout_ = 150;
 uint8_t Repeater::num_registered_ = 0;
 const Key(* Repeater::repeater_list_)[2 + REPEATER_MAX_CANCEL_KEYS] = nullptr;
 uint16_t Repeater::tap_start_time_;
+uint8_t Repeater::limited_to_layer = 255;
+
 
 EventHandlerResult Repeater::onKeyswitchEvent(Key &mapped_key, KeyAddr key_addr, uint8_t key_state) {
   if (!is_active_) {
     return EventHandlerResult::OK;
+  }
+
+  if (limited_to_layer < 255 && limited_to_layer != Layer.top()) {
+	return EventHandlerResult::OK;
   }
 
   // Not a real key, possibly injected by some plugin like this one,
@@ -87,6 +94,10 @@ EventHandlerResult Repeater::onKeyswitchEvent(Key &mapped_key, KeyAddr key_addr,
 EventHandlerResult Repeater::beforeReportingState() {
   if (!is_active_) {
     return EventHandlerResult::OK;
+  }
+
+  if (limited_to_layer < 255 && limited_to_layer != Layer.top()) {
+	return EventHandlerResult::OK;
   }
 
   for (uint8_t i = 0; i < REPEATER_MAX_HELD_KEYS; i++) {

@@ -4,26 +4,15 @@
 #include "kaleidoscope/Runtime.h"
 #include "kaleidoscope/keyswitch_state.h"
 
-
-// TODO: use defines to allow using multiple cancel keys
-
-// TODO: we could use a limit-to-layers array or so
-
-// TODO: when using multiple cancel keys, we need to add a blank key at the end
+#ifndef REPEATER_MAX_CANCEL_KEYS
 #define REPEATER_MAX_CANCEL_KEYS 1
+#endif
 
-// TODO: What happens if we store such values in a static constexpr in
-// the class. It the cpp and the ino include them, which value would
-// get used and is it consistent?
-//
-// Otherwise we would have to keep all code making use of these macros
-// in the header file.
 #ifndef REPEATER_MAX_HELD_KEYS
 #define REPEATER_MAX_HELD_KEYS 4
 #endif
 
-// TODO: move to progmem? does this make sense for a potentially so
-// small amount of keys?
+// TODO: Would it make sense to move the repeater_list to progmem?
 //
 // Macro to be used in the sketch files `setup` function.
 #define REGISTER_REPEATERS(repeater_defs...) {                         \
@@ -32,6 +21,7 @@
   };                                                                   \
   Repeater.registerRepeaterList(_repeater_list);                       \
 }
+
 
 namespace kaleidoscope {
 namespace plugin {
@@ -53,6 +43,9 @@ struct TrackedKey {
 class Repeater : public kaleidoscope::Plugin {
 
  public:
+  /** If this doesn't match the topmost active layer, pause repeating. */
+  static uint8_t limited_to_layer;
+
   /** Set how fast a pressed key needs to be released to count as a tap. */
   static void setTapTimeout(uint8_t tap_timeout) {
    	tap_timeout_ = tap_timeout;
