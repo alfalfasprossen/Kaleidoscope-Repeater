@@ -22,23 +22,13 @@
   Repeater.registerRepeaterList(_repeater_list);                       \
 }
 
+#define _REPEATER_IS_TIMER(_idx) (is_timer_bits_ & (1 << _idx))
+#define _REPEATER_SET_TIMER_ON(_idx) (is_timer_bits_ |= (1 << _idx))
+#define _REPEATER_SET_TIMER_OFF(_idx) (is_timer_bits_ &= ~(1 << _idx))
+
 
 namespace kaleidoscope {
 namespace plugin {
-
-struct TrackedKey {
-  /** Either a key to be repeated or an action key to be timed. */
-  Key key;
-  /**
-   * If the key is an action key that is currently timed for tap/hold.
-   */
-  // TODO: Maybe we can make this a bitfield that uses one bit from
-  // the key field. - or track this in a single bitfield outside the
-  // tracked key, making the struct unnecessary. Even using a 16 bit
-  // int to track this would be the same memory for 16 keys at is
-  // currently for two.
-  bool is_timer;
-};
 
 class Repeater : public kaleidoscope::Plugin {
 
@@ -63,10 +53,10 @@ class Repeater : public kaleidoscope::Plugin {
   /** Stop repeating the key. */
   static void stop(Key key) {
     for (uint8_t i = 0; i < REPEATER_MAX_HELD_KEYS; i++) {
-      if (!tracked_keys_[i].is_timer && tracked_keys_[i].key == key) {
-        Kaleidoscope.serialPort().print("stopping key ");
-        Kaleidoscope.serialPort().println(key.getKeyCode());
-        tracked_keys_[i].key = Key_NoKey;
+      if (!_REPEATER_IS_TIMER(i) && tracked_keys_[i] == key) {
+        // Kaleidoscope.serialPort().print("stopping key ");
+        // Kaleidoscope.serialPort().println(key.getKeyCode());
+        tracked_keys_[i] = Key_NoKey;
       }
     }
   }
@@ -74,7 +64,7 @@ class Repeater : public kaleidoscope::Plugin {
   /** Stop repeating all keys and timers. */
   static void stopAll() {
 	  for (uint8_t i = 0; i < REPEATER_MAX_HELD_KEYS; i++) {
-		  tracked_keys_[i].key = Key_NoKey;
+		  tracked_keys_[i] = Key_NoKey;
 	  }
   }
 
@@ -98,7 +88,9 @@ class Repeater : public kaleidoscope::Plugin {
   static bool is_active_;
   static const Key (*repeater_list_)[2 + REPEATER_MAX_CANCEL_KEYS];
   static uint8_t num_registered_;
-  static TrackedKey tracked_keys_[REPEATER_MAX_HELD_KEYS];
+  /** A list of keys to be repeated or action keys to be timed. */
+  static Key tracked_keys_[REPEATER_MAX_HELD_KEYS];
+  static uint8_t is_timer_bits_;
   static uint8_t tap_timeout_;
   // Time at which any action key got pressed. We use only one timer
   // to save memory - it is extremely unlikely that multiple keys
@@ -110,7 +102,7 @@ class Repeater : public kaleidoscope::Plugin {
 
   static bool isRepeating(Key key) {
     for (uint8_t i = 0; i < REPEATER_MAX_HELD_KEYS; i++) {
-      if (!tracked_keys_[i].is_timer && tracked_keys_[i].key == key) {
+	  if (!_REPEATER_IS_TIMER(i) && tracked_keys_[i] == key) {
         return true;
       }
     }
@@ -119,7 +111,7 @@ class Repeater : public kaleidoscope::Plugin {
 
   static bool isTiming(Key key) {
     for (uint8_t i = 0; i < REPEATER_MAX_HELD_KEYS; i++) {
-      if (tracked_keys_[i].is_timer && tracked_keys_[i].key == key) {
+      if (_REPEATER_IS_TIMER(i) && tracked_keys_[i] == key) {
         return true;
       }
     }
@@ -135,14 +127,14 @@ class Repeater : public kaleidoscope::Plugin {
    * number of keys being tracked, the call has no effect.
    */
   static void startTimer(Key key) {
-    Kaleidoscope.serialPort().println("starting timer");
+    // Kaleidoscope.serialPort().println("starting timer");
     for (uint8_t i = 0; i < REPEATER_MAX_HELD_KEYS; i++) {
-      if (tracked_keys_[i].key == Key_NoKey) {
+      if (tracked_keys_[i] == Key_NoKey) {
 	    tap_start_time_ = Runtime.millisAtCycleStart();
-        tracked_keys_[i].key = key;
-        tracked_keys_[i].is_timer = true;
-        Kaleidoscope.serialPort().print("registered timer for ");
-        Kaleidoscope.serialPort().println(tracked_keys_[i].key.getKeyCode());
+        tracked_keys_[i] = key;
+        _REPEATER_SET_TIMER_ON(i);
+        // Kaleidoscope.serialPort().print("registered timer for ");
+        // Kaleidoscope.serialPort().println(tracked_keys_[i].key.getKeyCode());
         return;
       }
     }
