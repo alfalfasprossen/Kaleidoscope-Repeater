@@ -45,6 +45,10 @@ class Repeater : public kaleidoscope::Plugin {
 	is_active_ = true;
   }
 
+  static bool isActive() {
+	return is_active_;
+  }
+
   static void deactivate() {
 	is_active_ = false;
 	stopAll();
