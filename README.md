@@ -1,6 +1,19 @@
 # Kaleidoscope-Repeater
 
-TODO
+Tap keys to make keys act as being held down until cancelled.
+
+Ever got annoyed at - or pain in your middle finger from - holding
+down the `W` key when exploring open world games? Are you even one of
+those that once put a weight onto a key to have it held down? Some old
+games had something called *auto-walk*, a key you could press once to
+move forward until you either moved forward or backward by pressing a
+respective other key.
+
+Repeater lets you define keys to cause the repetition (act as if being
+held) of either the same or any other key when a defined action key is
+tapped - holding a key will not trigger a repetition. A repeating key
+can be cancelled by specifying cancelling keys for the repeatable key,
+they can also be the same key.
 
 ## Installation
 
@@ -24,7 +37,7 @@ The macro `REGISTER_REPEATERS` is provided for convenience.
 
 KALEIDOSCOPE_INIT_PLUGINS(Repeater);
 
-void setup () {
+void setup() {
   Kaleidoscope.setup();
 
   REGISTER_REPEATERS(
@@ -47,7 +60,12 @@ automatically. If I press forward again or press backward, stop moving
 forward automatically.
 
 You can use `Key_NoKey` to define a repeater without a real action or
-cancel key.
+cancel key - for example to define multiple cancel keys for the same
+target.
+
+*Note: Key events are not consumed by Repeater. Any keypress - action
+key, cancel key or else - is forwarded as-is to the host or followup
+plugins.*
 
 ### Limiting To A Specific Layer
 
@@ -60,9 +78,9 @@ layer is not the top active layer.
 enum {TYPING, GAMING};
 
 KEYMAPS(
-  [TYPING] = (...),
+  [TYPING] = KEYMAP_STACKED(...),
 
-  [GAMING] = (...)
+  [GAMING] = KEYMAP_STACKED(...)
 )
 
 KALEIDOSCOPE_INIT_PLUGINS(Repeater);
@@ -72,9 +90,36 @@ void setup () {
 }
 ```
 
-### TODO
-advanced usage like a fake key that doesnt produce an actual keycode
+### Using Synthetic Keys
 
+You may not want to use actual keys but a synthetic key to use as an
+action key. There are no pre-defined synthetic keys to use with
+Repeater, but you can simply define some yourself and use them in the
+repeater definitions.
+
+``` c++
+// Ranges required to define syntethic keys that don't interfere with
+// other plugins.
+#include <Kaleidoscope-Ranges.h>
+
+// Define a synthetic key to use in the keymap. If you use multiple,
+// increase the key value, e.g. `SAFE_START + 1`.
+static constexpr Key Key_MyRepeaterKey{kaleidoscope::ranges::SAFE_START};
+
+KEYMAPS(
+  [PRIMARY] = KEYMAP_STACKED
+  (// Add your key somewhere in the keymap.
+   Key_MyRepeaterKey, ...)
+)
+
+void setup() {
+  Kaleidoscope.setup();
+
+  REGISTER_REPEATERS(
+    {Key_MyRepeaterKey, Key_W, Key_MyRepeaterKey}
+  );
+}
+```
 
 ## Plugin Properties
 
@@ -96,6 +141,11 @@ properties:
 ### `.activate()`
 
 > Re-activate the plugin if it was deactivated.
+
+### `.isActive()`
+
+> Get the current activity state - useful if you need to conditionally
+> toggle the plugin.
 
 ### `.setTapTimeout(timeout)`
 
