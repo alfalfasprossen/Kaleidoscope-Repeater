@@ -1,3 +1,20 @@
+/* -*- mode: c++ -*-
+ * Kaleidoscope-Repeater -- Define keys to be repeated when tapped.
+ * Copyright (C) 2020  Johannes Becker
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "Kaleidoscope-Repeater.h"
 #include "kaleidoscope/layers.h"
 
@@ -51,30 +68,21 @@ EventHandlerResult Repeater::onKeyswitchEvent(Key &mapped_key, KeyAddr key_addr,
       if (mapped_key != repeater_list_[list_idx][ACTION_KEY_IDX]) {
         continue;
       }
-      // Kaleidoscope.serialPort().println("action key released");
       for (uint8_t i = 0; i < REPEATER_MAX_HELD_KEYS; i++) {
-        // Kaleidoscope.serialPort().println(tracked_keys_[i].key.getKeyCode());
-        // Kaleidoscope.serialPort().println(mapped_key.getKeyCode());
         if (_REPEATER_IS_TIMER(i) && tracked_keys_[i] == mapped_key) {
-          // Kaleidoscope.serialPort().println("is timer");
           uint16_t held_time = Runtime.millisAtCycleStart() - tap_start_time_;
-          // Kaleidoscope.serialPort().print("was held for ");
-          // Kaleidoscope.serialPort().println(held_time);
           if (held_time > tap_timeout_) {
             // This key was held down for too long, stop tracking it.
             tracked_keys_[i] = Key_NoKey;
             break;
           }
           // This key was tapped.
-          // Kaleidoscope.serialPort().println("key was tapped");
           if (isRepeating(repeater_list_[list_idx][TARGET_KEY_IDX])) {
             // In case the target key is already repeating, just clear
             // the space. This might happen when another action key
             // has the same target.
-            // Kaleidoscope.serialPort().println("is already repeating");
             tracked_keys_[i] = Key_NoKey;
           } else {
-            // Kaleidoscope.serialPort().println("setting repeater");
             tracked_keys_[i] = repeater_list_[list_idx][TARGET_KEY_IDX];
             _REPEATER_SET_TIMER_OFF(i);
           }
@@ -85,7 +93,6 @@ EventHandlerResult Repeater::onKeyswitchEvent(Key &mapped_key, KeyAddr key_addr,
       }
     }
   }
-  // TODO: maybe add a weak function to allow consuming key events.
   return EventHandlerResult::OK;
 }
 
@@ -100,7 +107,6 @@ EventHandlerResult Repeater::beforeReportingState() {
 
   for (uint8_t i = 0; i < REPEATER_MAX_HELD_KEYS; i++) {
     if (!_REPEATER_IS_TIMER(i) && tracked_keys_[i] != Key_NoKey) {
-      // Kaleidoscope.serialPort().println("would inject key");
       handleKeyswitchEvent(tracked_keys_[i], UnknownKeyswitchLocation,
                            IS_PRESSED | WAS_PRESSED | INJECTED);
     }

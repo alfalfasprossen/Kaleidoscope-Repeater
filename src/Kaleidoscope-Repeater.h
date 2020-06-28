@@ -1,8 +1,24 @@
+/* -*- mode: c++ -*-
+ * Kaleidoscope-Repeater -- Define keys to be repeated when tapped.
+ * Copyright (C) 2020  Johannes Becker
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #pragma once
 
 #include <Kaleidoscope.h>
 #include "kaleidoscope/Runtime.h"
-#include "kaleidoscope/keyswitch_state.h"
 
 #ifndef REPEATER_MAX_CANCEL_KEYS
 #define REPEATER_MAX_CANCEL_KEYS 1
@@ -58,8 +74,6 @@ class Repeater : public kaleidoscope::Plugin {
   static void stop(Key key) {
     for (uint8_t i = 0; i < REPEATER_MAX_HELD_KEYS; i++) {
       if (!_REPEATER_IS_TIMER(i) && tracked_keys_[i] == key) {
-        // Kaleidoscope.serialPort().print("stopping key ");
-        // Kaleidoscope.serialPort().println(key.getKeyCode());
         tracked_keys_[i] = Key_NoKey;
       }
     }
@@ -131,14 +145,11 @@ class Repeater : public kaleidoscope::Plugin {
    * number of keys being tracked, the call has no effect.
    */
   static void startTimer(Key key) {
-    // Kaleidoscope.serialPort().println("starting timer");
     for (uint8_t i = 0; i < REPEATER_MAX_HELD_KEYS; i++) {
       if (tracked_keys_[i] == Key_NoKey) {
 	    tap_start_time_ = Runtime.millisAtCycleStart();
         tracked_keys_[i] = key;
         _REPEATER_SET_TIMER_ON(i);
-        // Kaleidoscope.serialPort().print("registered timer for ");
-        // Kaleidoscope.serialPort().println(tracked_keys_[i].key.getKeyCode());
         return;
       }
     }
