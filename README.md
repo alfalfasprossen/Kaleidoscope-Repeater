@@ -2,6 +2,8 @@
 
 Tap keys to make keys act as being held down until cancelled.
 
+![Hold that key](./stone.png)
+
 Ever got annoyed at - or pain in your middle finger from - holding
 down the `W` key when exploring open world games? Are you even one of
 those that once put a weight onto a key to have it held down? Some old
